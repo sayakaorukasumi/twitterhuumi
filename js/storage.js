@@ -1,21 +1,17 @@
 const Storage = {
-  KEY: 'twitterhuumi_posts',
+  POSTS_KEY:    'twitterhuumi_posts',
+  NOTIFS_KEY:   'twitterhuumi_notifs',
+  SETTINGS_KEY: 'twitterhuumi_settings',
 
   getPosts() {
-    try {
-      return JSON.parse(localStorage.getItem(this.KEY)) || [];
-    } catch {
-      return [];
-    }
+    try { return JSON.parse(localStorage.getItem(this.POSTS_KEY)) || []; }
+    catch { return []; }
   },
 
   savePosts(posts) {
-    try {
-      localStorage.setItem(this.KEY, JSON.stringify(posts));
-    } catch {
-      try {
-        localStorage.setItem(this.KEY, JSON.stringify(posts.slice(0, 50)));
-      } catch {}
+    try { localStorage.setItem(this.POSTS_KEY, JSON.stringify(posts)); }
+    catch {
+      try { localStorage.setItem(this.POSTS_KEY, JSON.stringify(posts.slice(0, 50))); } catch {}
     }
   },
 
@@ -37,5 +33,27 @@ const Storage = {
 
   getPost(postId) {
     return this.getPosts().find(p => p.id === postId) || null;
+  },
+
+  // ===== Notifications =====
+  getNotifications() {
+    try { return JSON.parse(localStorage.getItem(this.NOTIFS_KEY)) || []; }
+    catch { return []; }
+  },
+
+  addNotification(notif) {
+    const list = this.getNotifications();
+    list.unshift(notif);
+    try { localStorage.setItem(this.NOTIFS_KEY, JSON.stringify(list.slice(0, 200))); } catch {}
+  },
+
+  // ===== Settings =====
+  getUserSettings() {
+    try { return JSON.parse(localStorage.getItem(this.SETTINGS_KEY)) || {}; }
+    catch { return {}; }
+  },
+
+  saveUserSettings(settings) {
+    try { localStorage.setItem(this.SETTINGS_KEY, JSON.stringify(settings)); } catch {}
   }
 };
