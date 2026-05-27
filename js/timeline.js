@@ -4,11 +4,7 @@ const Timeline = {
   init(container) {
     this.container = container;
     const posts = Storage.getPosts();
-    if (posts.length === 0) {
-      this.showEmpty();
-    } else {
-      this.render(posts);
-    }
+    posts.length === 0 ? this.showEmpty() : this.render(posts);
   },
 
   showEmpty() {
@@ -30,21 +26,14 @@ const Timeline = {
     const el = document.createElement('article');
     el.className = 'post-card';
     el.dataset.postId = post.id;
-    if (post.isCharacterPost) {
-      el.classList.add(post.author?.isCharacter === 'kaoru' ? 'kaoru-post' : 'kasumi-post');
-    }
+    if (post.isCharacterPost) el.classList.add(post.author?.isCharacter === 'kaoru' ? 'kaoru-post' : 'kasumi-post');
 
     const { av, name, handle, cls } = this._authorInfo(post);
     const time = this._formatTime(post.timestamp);
 
     let mediaHTML = '';
-    if (post.media) {
-      if (post.media.type === 'image') {
-        mediaHTML = `<div class="post-media"><img src="${post.media.data}" alt="添付画像" loading="lazy"></div>`;
-      } else if (post.media.type === 'video') {
-        mediaHTML = `<div class="post-media"><video src="${post.media.data}" controls preload="metadata"></video></div>`;
-      }
-    }
+    if (post.media?.type === 'image') mediaHTML = `<div class="post-media"><img src="${post.media.data}" alt="添付画像" loading="lazy"></div>`;
+    else if (post.media?.type === 'video') mediaHTML = `<div class="post-media"><video src="${post.media.data}" controls preload="metadata"></video></div>`;
 
     const repliesHTML = replies.length > 0
       ? `<div class="replies-thread">${replies.map(r => this._replyHTML(r)).join('')}</div>`
@@ -54,7 +43,7 @@ const Timeline = {
       <div class="post-header">
         <div class="${cls}">${av}</div>
         <div class="post-meta">
-          <span class="author-name">${name}</span>
+          <span class="author-name">${this._escape(name)}</span>
           <span class="author-handle">${handle}</span>
           <span class="post-time">${time}</span>
         </div>
@@ -88,7 +77,7 @@ const Timeline = {
         <div class="post-header">
           <div class="${cls} small">${av}</div>
           <div class="post-meta">
-            <span class="author-name">${name}</span>
+            <span class="author-name">${this._escape(name)}</span>
             <span class="author-handle">${handle}</span>
             <span class="post-time">${time}</span>
           </div>
@@ -104,12 +93,21 @@ const Timeline = {
   },
 
   _authorInfo(post) {
+    const s = Storage.getUserSettings();
     if (post.isUserPost) {
-      return { av: '👤', name: 'あなた', handle: '@you', cls: 'avatar user-avatar' };
+      const name = s.userName || 'あなた';
+      const av = s.userAvatar ? `<img src="${s.userAvatar}" class="avatar-img" alt="">` : '👤';
+      return { av, name, handle: '@you', cls: 'avatar user-avatar' };
     }
     const ch = post.author?.isCharacter;
-    if (ch === 'kaoru')  return { av: '🌸', name: '薫',  handle: '@kaoru_here',    cls: 'avatar kaoru-avatar' };
-    if (ch === 'kasumi') return { av: '❄️', name: '霞',  handle: '@kasumi_watch', cls: 'avatar kasumi-avatar' };
+    if (ch === 'kaoru') {
+      const av = s.kaoruAvatar ? `<img src="${s.kaoruAvatar}" class="avatar-img" alt="">` : '🌸';
+      return { av, name: '薫', handle: '@kaoru_here', cls: 'avatar kaoru-avatar' };
+    }
+    if (ch === 'kasumi') {
+      const av = s.kasumiAvatar ? `<img src="${s.kasumiAvatar}" class="avatar-img" alt="">` : '❄️';
+      return { av, name: '霞', handle: '@kasumi_watch', cls: 'avatar kasumi-avatar' };
+    }
     const n = post.author?.name || '?';
     return { av: n[0], name: n, handle: post.author?.handle || '@unknown', cls: 'avatar pseudo-avatar' };
   },
@@ -117,8 +115,7 @@ const Timeline = {
   addPost(post) {
     const empty = this.container.querySelector('.timeline-empty');
     if (empty) empty.remove();
-    const el = this.createPostEl(post);
-    this.container.insertBefore(el, this.container.firstChild);
+    this.container.insertBefore(this.createPostEl(post), this.container.firstChild);
   },
 
   addReply(reply) {
@@ -132,10 +129,7 @@ const Timeline = {
     }
     thread.style.display = '';
     thread.insertAdjacentHTML('beforeend', this._replyHTML(reply));
-    setTimeout(() => {
-      const last = thread.lastElementChild;
-      if (last) last.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-    }, 100);
+    setTimeout(() => thread.lastElementChild?.scrollIntoView({ behavior: 'smooth', block: 'nearest' }), 100);
   },
 
   updatePostReactions(postId, likes, retweets, replies) {
@@ -158,7 +152,7 @@ const Timeline = {
 
   _escape(str) {
     const d = document.createElement('div');
-    d.appendChild(document.createTextNode(String(str)));
+    d.appendChild(document.createTextNode(String(str || '')));
     return d.innerHTML;
   }
 };
