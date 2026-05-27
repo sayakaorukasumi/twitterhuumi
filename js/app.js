@@ -228,11 +228,14 @@ function setupAvatarUpload(inputId, previewId, removeId, key) {
     if (!file) return;
     const reader = new FileReader();
     reader.onload = ev => {
-      const s = Storage.getUserSettings();
-      s[key] = ev.target.result;
-      Storage.saveUserSettings(s);
-      _setPreview(previewId, ev.target.result);
-      applySettings();
+      _compressAvatar(ev.target.result, compressed => {
+        const s = Storage.getUserSettings();
+        s[key] = compressed;
+        const ok = Storage.saveUserSettings(s);
+        if (!ok) { Notifications.show('画像が大きすぎて保存できませんでした', 'default'); return; }
+        applySettings();
+        if (Storage.getPosts().length > 0) Timeline.render(Storage.getPosts());
+      });
     };
     reader.readAsDataURL(file);
   });
@@ -266,18 +269,13 @@ function _clearPreview(id, key) {
 
 function applySettings() {
   const s = Storage.getUserSettings();
-  // display name input
   const nameInput = document.getElementById('user-display-name');
   if (nameInput) nameInput.value = s.userName || '';
-  // compose avatar
   _applyAv(document.getElementById('compose-avatar'), s.userAvatar, '👤');
-  // reply avatar
   _applyAv(document.getElementById('reply-avatar'), s.userAvatar, '👤');
-  // settings previews
   s.userAvatar   ? _setPreview('user-avatar-preview',   s.userAvatar)   : _clearPreview('user-avatar-preview',   'userAvatar');
   s.kaoruAvatar  ? _setPreview('kaoru-avatar-preview',  s.kaoruAvatar)  : _clearPreview('kaoru-avatar-preview',  'kaoruAvatar');
   s.kasumiAvatar ? _setPreview('kasumi-avatar-preview', s.kasumiAvatar) : _clearPreview('kasumi-avatar-preview', 'kasumiAvatar');
-  // sidebar chars
   _applyAv(document.getElementById('sidebar-kaoru'),  s.kaoruAvatar,  '🌸');
   _applyAv(document.getElementById('sidebar-kasumi'), s.kasumiAvatar, '❄️');
 }
@@ -293,6 +291,21 @@ function _applyAv(el, src, fallback) {
     el.style.background = '';
     el.style.fontSize = '';
   }
+}
+
+function _compressAvatar(dataUrl, callback) {
+  const img = new Image();
+  img.onload = () => {
+    const MAX = 300;
+    const ratio = Math.min(MAX / img.width, MAX / img.height, 1);
+    const canvas = document.createElement('canvas');
+    canvas.width  = Math.round(img.width  * ratio);
+    canvas.height = Math.round(img.height * ratio);
+    canvas.getContext('2d').drawImage(img, 0, 0, canvas.width, canvas.height);
+    callback(canvas.toDataURL('image/jpeg', 0.75));
+  };
+  img.onerror = () => callback(dataUrl);
+  img.src = dataUrl;
 }
 
 // ===== SEED + SCHEDULE =====

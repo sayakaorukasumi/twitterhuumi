@@ -54,6 +54,7 @@ const Storage = {
   },
 
   saveUserSettings(settings) {
-    try { localStorage.setItem(this.SETTINGS_KEY, JSON.stringify(settings)); } catch {}
+    try { localStorage.setItem(this.SETTINGS_KEY, JSON.stringify(settings)); return true; }
+    catch { return false; }
   }
 };
