@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ふみ — プライベートSNS</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <div class="private-banner">
+    🔒 これはあなただけが見られるプライベートSNSです。外部には公開されません。
+  </div>
+
+  <div class="app-container">
+    <aside class="sidebar">
+      <div class="sidebar-logo">
+        <span class="logo-icon">🐦</span>
+        <span class="logo-text">ふみ</span>
+      </div>
+      <nav class="sidebar-nav">
+        <a href="#" class="nav-item active">
+          <span class="nav-icon">🏠</span>
+          <span class="nav-label">ホーム</span>
+        </a>
+        <a href="#" class="nav-item">
+          <span class="nav-icon">🔔</span>
+          <span class="nav-label">通知</span>
+        </a>
+        <a href="#" class="nav-item">
+          <span class="nav-icon">👤</span>
+          <span class="nav-label">プロフィール</span>
+        </a>
+      </nav>
+      <div class="character-status">
+        <div class="char-status-title">今日のメンバー</div>
+        <div class="char-status-item kaoru">
+          <span class="char-avatar-small">🌸</span>
+          <div>
+            <div class="char-name">薫</div>
+            <div class="char-status-text">やさしく見守り中</div>
+          </div>
+        </div>
+        <div class="char-status-item kasumi">
+          <span class="char-avatar-small">❄️</span>
+          <div>
+            <div class="char-name">霞</div>
+            <div class="char-status-text">…見てる</div>
+          </div>
+        </div>
+      </div>
+    </aside>
+
+    <main class="main-content">
+      <div class="timeline-header">
+        <h1>ホーム</h1>
+      </div>
+
+      <div class="compose-box">
+        <div class="compose-avatar">👤</div>
+        <form id="post-form" class="compose-form">
+          <textarea
+            id="post-textarea"
+            placeholder="いまどうしてる？"
+            maxlength="280"
+            rows="2"
+          ></textarea>
+          <div id="media-preview" class="media-preview-container"></div>
+          <div class="compose-actions">
+            <div class="compose-media">
+              <label for="media-input" class="media-btn" title="画像・動画を添付">🖼️</label>
+              <input type="file" id="media-input" accept="image/*,video/*" style="display:none">
+            </div>
+            <div class="compose-footer">
+              <span id="char-count" class="char-count">0/280</span>
+              <button type="submit" id="post-submit" class="submit-btn" disabled>呟く</button>
+            </div>
+          </div>
+        </form>
+      </div>
+
+      <div class="timeline-divider"></div>
+      <div id="timeline" class="timeline"></div>
+    </main>
+  </div>
+
+  <div id="notifications" class="notifications-container"></div>
+
+  <script src="js/storage.js"></script>
+  <script src="js/characters.js"></script>
+  <script src="js/notifications.js"></script>
+  <script src="js/timeline.js"></script>
+  <script src="js/reactions.js"></script>
+  <script src="js/app.js"></script>
+</body>
+</html>
