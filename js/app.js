@@ -5,7 +5,6 @@ document.addEventListener('DOMContentLoaded', () => {
   applySettings();
   if (Storage.getPosts().length === 0) seedInitialPosts();
 
-  // ===== TAB NAVIGATION =====
   document.querySelectorAll('[data-view]').forEach(item => {
     item.addEventListener('click', e => {
       e.preventDefault();
@@ -13,7 +12,6 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   });
 
-  // ===== COMPOSE =====
   const form         = document.getElementById('post-form');
   const textarea     = document.getElementById('post-textarea');
   const submitBtn    = document.getElementById('post-submit');
@@ -55,12 +53,12 @@ document.addEventListener('DOMContentLoaded', () => {
     e.preventDefault();
     const text = textarea.value.trim();
     if (!text) return;
-    const isBuzz = Reactions.isBuzzPost();
+    const buzzType = Reactions.isBuzzPost();
     const post = {
       id: `post_${Date.now()}`, type: 'post', parentId: null,
       text, timestamp: Date.now(),
       likes: 0, retweets: 0, replies: 0,
-      isUserPost: true, isBuzz, media: pendingMedia
+      isUserPost: true, isBuzz: buzzType, media: pendingMedia
     };
     Storage.addPost(post);
     Timeline.addPost(post);
@@ -71,18 +69,21 @@ document.addEventListener('DOMContentLoaded', () => {
     pendingMedia = null;
     mediaPreview.innerHTML = '';
     mediaInput.value = '';
-    Notifications.show(isBuzz ? 'バズ投稿の予感…！ 🔥' : '投稿しました！', isBuzz ? 'buzz' : 'default');
-    Reactions.scheduleReactions(post.id, isBuzz);
+    Notifications.show(
+      buzzType === 'big'  ? '大バズの予感…！ 🔥🔥🔥' :
+      buzzType === 'mini' ? 'バズり始めてる…！ 🔥' :
+      '投稿しました！',
+      buzzType ? 'buzz' : 'default'
+    );
+    Reactions.scheduleReactions(post.id, buzzType);
     Reactions.schedulePseudoReplies(post.id);
     Reactions.scheduleCharacterInteraction(post.id);
   });
 
-  // ===== TIMELINE CLICKS =====
   document.getElementById('timeline').addEventListener('click', e => {
     const likeBtn  = e.target.closest('.like-btn');
     const rtBtn    = e.target.closest('.rt-btn');
     const replyBtn = e.target.closest('.reply-btn');
-
     if (likeBtn && !likeBtn.classList.contains('liked')) {
       const id = likeBtn.dataset.postId;
       const post = Storage.getPost(id);
@@ -110,20 +111,16 @@ document.addEventListener('DOMContentLoaded', () => {
     if (replyBtn) openReplyModal(replyBtn.dataset.postId);
   });
 
-  // ===== REPLY MODAL =====
   const replyTextarea = document.getElementById('reply-textarea');
   const replySubmit   = document.getElementById('reply-submit');
   const replyCC       = document.getElementById('reply-char-count');
-
   replyTextarea.addEventListener('input', () => {
     const len = replyTextarea.value.length;
     replyCC.textContent = `${len}/280`;
     replySubmit.disabled = len === 0 || len > 280;
   });
-
   document.getElementById('reply-close').addEventListener('click', closeReplyModal);
   document.getElementById('reply-backdrop').addEventListener('click', closeReplyModal);
-
   replySubmit.addEventListener('click', () => {
     const text = replyTextarea.value.trim();
     if (!text || !window._replyTargetId) return;
@@ -145,11 +142,9 @@ document.addEventListener('DOMContentLoaded', () => {
     Reactions.scheduleCharacterInteraction(reply.id);
   });
 
-  // ===== SETTINGS =====
   setupAvatarUpload('user-avatar-input',   'user-avatar-preview',   'user-avatar-remove',   'userAvatar');
   setupAvatarUpload('kaoru-avatar-input',  'kaoru-avatar-preview',  'kaoru-avatar-remove',  'kaoruAvatar');
   setupAvatarUpload('kasumi-avatar-input', 'kasumi-avatar-preview',  'kasumi-avatar-remove', 'kasumiAvatar');
-
   document.getElementById('settings-save').addEventListener('click', () => {
     const settings = Storage.getUserSettings();
     settings.userName = document.getElementById('user-display-name').value.trim() || 'あなた';
@@ -164,7 +159,6 @@ document.addEventListener('DOMContentLoaded', () => {
   startLikeHeartbeat();
 });
 
-// ===== VIEW SWITCHING =====
 function switchView(name) {
   document.querySelectorAll('.nav-item, .bottom-item').forEach(n => n.classList.remove('active'));
   document.querySelectorAll(`[data-view="${name}"]`).forEach(n => n.classList.add('active'));
@@ -173,12 +167,10 @@ function switchView(name) {
   if (name === 'notifs') NotifList.clearBadge();
 }
 
-// ===== REPLY MODAL =====
 function openReplyModal(postId) {
   window._replyTargetId = postId;
   const post = Storage.getPost(postId);
   if (!post) return;
-
   const { av, name, handle, cls } = Timeline._authorInfo(post);
   const time = Timeline._formatTime(post.timestamp);
   document.getElementById('reply-parent').innerHTML = `
@@ -197,19 +189,14 @@ function openReplyModal(postId) {
         <div class="reply-hint">返信先: <span class="reply-hint-name">${Timeline._escape(name)}</span></div>
       </div>
     </div>`;
-
   const s = Storage.getUserSettings();
   const av2 = document.getElementById('reply-avatar');
   if (s.userAvatar) {
     av2.innerHTML = `<img src="${s.userAvatar}" class="avatar-img" alt="">`;
-    av2.style.background = 'transparent';
-    av2.style.fontSize = '0';
+    av2.style.background = 'transparent'; av2.style.fontSize = '0';
   } else {
-    av2.innerHTML = '👤';
-    av2.style.background = '';
-    av2.style.fontSize = '';
+    av2.innerHTML = '👤'; av2.style.background = ''; av2.style.fontSize = '';
   }
-
   document.getElementById('reply-modal').classList.remove('hidden');
   setTimeout(() => document.getElementById('reply-textarea').focus(), 100);
 }
@@ -222,7 +209,6 @@ function closeReplyModal() {
   window._replyTargetId = null;
 }
 
-// ===== SETTINGS HELPERS =====
 function setupAvatarUpload(inputId, previewId, removeId, key) {
   document.getElementById(inputId).addEventListener('change', e => {
     const file = e.target.files[0];
@@ -255,45 +241,36 @@ function _setPreview(id, src) {
   const el = document.getElementById(id);
   if (!el) return;
   el.innerHTML = `<img src="${src}" class="avatar-img" alt="">`;
-  el.style.background = 'transparent';
-  el.style.fontSize = '0';
+  el.style.background = 'transparent'; el.style.fontSize = '0';
 }
-
 function _clearPreview(id, key) {
   const el = document.getElementById(id);
   if (!el) return;
   const fb = { userAvatar: '👤', kaoruAvatar: '🌸', kasumiAvatar: '❄️' };
   el.innerHTML = fb[key] || '👤';
-  el.style.background = '';
-  el.style.fontSize = '';
+  el.style.background = ''; el.style.fontSize = '';
 }
-
 function applySettings() {
   const s = Storage.getUserSettings();
   const nameInput = document.getElementById('user-display-name');
   if (nameInput) nameInput.value = s.userName || '';
   _applyAv(document.getElementById('compose-avatar'), s.userAvatar, '👤');
-  _applyAv(document.getElementById('reply-avatar'), s.userAvatar, '👤');
+  _applyAv(document.getElementById('reply-avatar'),   s.userAvatar, '👤');
   s.userAvatar   ? _setPreview('user-avatar-preview',   s.userAvatar)   : _clearPreview('user-avatar-preview',   'userAvatar');
   s.kaoruAvatar  ? _setPreview('kaoru-avatar-preview',  s.kaoruAvatar)  : _clearPreview('kaoru-avatar-preview',  'kaoruAvatar');
   s.kasumiAvatar ? _setPreview('kasumi-avatar-preview', s.kasumiAvatar) : _clearPreview('kasumi-avatar-preview', 'kasumiAvatar');
   _applyAv(document.getElementById('sidebar-kaoru'),  s.kaoruAvatar,  '🌸');
   _applyAv(document.getElementById('sidebar-kasumi'), s.kasumiAvatar, '❄️');
 }
-
 function _applyAv(el, src, fallback) {
   if (!el) return;
   if (src) {
     el.innerHTML = `<img src="${src}" class="avatar-img" alt="">`;
-    el.style.background = 'transparent';
-    el.style.fontSize = '0';
+    el.style.background = 'transparent'; el.style.fontSize = '0';
   } else {
-    el.innerHTML = fallback;
-    el.style.background = '';
-    el.style.fontSize = '';
+    el.innerHTML = fallback; el.style.background = ''; el.style.fontSize = '';
   }
 }
-
 function _compressAvatar(dataUrl, callback) {
   const img = new Image();
   img.onload = () => {
@@ -309,7 +286,6 @@ function _compressAvatar(dataUrl, callback) {
   img.src = dataUrl;
 }
 
-// ===== SEED + SCHEDULE =====
 function seedInitialPosts() {
   const now = Date.now();
   [
@@ -334,9 +310,12 @@ function seedInitialPosts() {
 function scheduleCharacterPosts() {
   function nextKaoru() {
     setTimeout(() => {
+      const pd = Characters.getRandomKaoruPost();
       const post = {
         id: `kaoru_${Date.now()}`, type: 'post', parentId: null,
-        text: Characters.getRandomKaoruPost(), timestamp: Date.now(),
+        text: pd.text,
+        media: pd.image ? { type: 'image', data: pd.image } : null,
+        timestamp: Date.now(),
         likes: Math.floor(Math.random() * 4) + 1, retweets: Math.floor(Math.random() * 2),
         replies: 0, isUserPost: false, isCharacterPost: true,
         author: { name: '薫', handle: '@kaoru_here', isCharacter: 'kaoru' }
@@ -344,13 +323,16 @@ function scheduleCharacterPosts() {
       Storage.addPost(post); Timeline.addPost(post);
       Notifications.show('薫が投稿しました 🌸', 'character');
       nextKaoru();
-    }, 120000 + Math.random() * 180000);
+    }, 9000000 + Math.random() * 3600000);
   }
   function nextKasumi() {
     setTimeout(() => {
+      const pd = Characters.getRandomKasumiPost();
       const post = {
         id: `kasumi_${Date.now()}`, type: 'post', parentId: null,
-        text: Characters.getRandomKasumiPost(), timestamp: Date.now(),
+        text: pd.text,
+        media: pd.image ? { type: 'image', data: pd.image } : null,
+        timestamp: Date.now(),
         likes: Math.floor(Math.random() * 3), retweets: Math.floor(Math.random() * 2),
         replies: 0, isUserPost: false, isCharacterPost: true,
         author: { name: '霞', handle: '@kasumi_watch', isCharacter: 'kasumi' }
@@ -358,7 +340,7 @@ function scheduleCharacterPosts() {
       Storage.addPost(post); Timeline.addPost(post);
       Notifications.show('霞が投稿しました ❄️', 'character');
       nextKasumi();
-    }, 180000 + Math.random() * 240000);
+    }, 10800000 + Math.random() * 3600000);
   }
   nextKaoru();
   nextKasumi();
