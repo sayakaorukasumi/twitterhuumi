@@ -161,6 +161,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
   scheduleCharacterPosts();
   reactivateRecentPosts();
+  startLikeHeartbeat();
 });
 
 // ===== VIEW SWITCHING =====
@@ -343,7 +344,7 @@ function scheduleCharacterPosts() {
       Storage.addPost(post); Timeline.addPost(post);
       Notifications.show('薫が投稿しました 🌸', 'character');
       nextKaoru();
-    }, 300000 + Math.random() * 300000);
+    }, 120000 + Math.random() * 180000);
   }
   function nextKasumi() {
     setTimeout(() => {
@@ -357,7 +358,7 @@ function scheduleCharacterPosts() {
       Storage.addPost(post); Timeline.addPost(post);
       Notifications.show('霞が投稿しました ❄️', 'character');
       nextKasumi();
-    }, 480000 + Math.random() * 420000);
+    }, 180000 + Math.random() * 240000);
   }
   nextKaoru();
   nextKasumi();
@@ -365,7 +366,43 @@ function scheduleCharacterPosts() {
 
 function reactivateRecentPosts() {
   const now = Date.now();
-  Storage.getPosts()
-    .filter(p => p.isUserPost && !p.parentId && (now - p.timestamp) < 300000)
-    .forEach(p => Reactions.scheduleReactions(p.id, p.isBuzz));
+  const userPosts = Storage.getPosts()
+    .filter(p => p.isUserPost && !p.parentId && (now - p.timestamp) < 5400000);
+  userPosts.forEach((p, i) => {
+    Reactions.scheduleReactions(p.id, p.isBuzz);
+    setTimeout(() => Reactions.scheduleCharacterInteraction(p.id), i * 8000 + Math.random() * 5000);
+  });
+}
+
+function startLikeHeartbeat() {
+  setInterval(() => {
+    const posts = Storage.getPosts().filter(p => p.isUserPost && !p.parentId);
+    if (!posts.length) return;
+    const post = posts[Math.floor(Math.random() * Math.min(posts.length, 5))];
+    const r = Math.random();
+    if (r < 0.15) {
+      const updated = Storage.updatePost(post.id, { likes: post.likes + 1 });
+      if (updated) {
+        Timeline.updatePostReactions(post.id, updated.likes);
+        Notifications.show('薫がいいねしました 🌸', 'like');
+        NotifList.add({ type: 'like', actorName: '薫', isCharacter: 'kaoru', actionText: 'あなたの投稿をいいねしました', postPreview: post.text ? post.text.slice(0, 60) : '' });
+      }
+    } else if (r < 0.25) {
+      const updated = Storage.updatePost(post.id, { likes: post.likes + 1 });
+      if (updated) {
+        Timeline.updatePostReactions(post.id, updated.likes);
+        Notifications.show('霞がいいねしました ❄️', 'like');
+        NotifList.add({ type: 'like', actorName: '霞', isCharacter: 'kasumi', actionText: 'あなたの投稿をいいねしました', postPreview: post.text ? post.text.slice(0, 60) : '' });
+      }
+    } else if (r < 0.65) {
+      const updated = Storage.updatePost(post.id, { likes: post.likes + 1 });
+      if (updated) {
+        Timeline.updatePostReactions(post.id, updated.likes);
+        if (Math.random() < 0.5) {
+          const u = Characters.getRandomPseudoReplier();
+          NotifList.add({ type: 'like', actorName: u.name, isCharacter: null, actionText: 'あなたの投稿をいいねしました', postPreview: post.text ? post.text.slice(0, 60) : '' });
+        }
+      }
+    }
+  }, 180000);
 }

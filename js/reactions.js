@@ -3,22 +3,21 @@ const Reactions = {
 
   scheduleReactions(postId, isBuzz) {
     const count    = isBuzz ? 15 : 12;
-    const maxDelay = isBuzz ? 90000 : 360000;
+    const maxDelay = isBuzz ? 60000 : 240000;
 
     for (let i = 0; i < count; i++) {
       setTimeout(() => {
         const post = Storage.getPost(postId);
         if (!post) return;
-        let likeInc = isBuzz ? Math.floor(Math.random() * 80) + 20 : (Math.random() < 0.6 ? 1 : 0);
-        let rtInc   = isBuzz ? Math.floor(Math.random() * 30) + 5  : (Math.random() < 0.25 ? 1 : 0);
+        let likeInc = isBuzz ? Math.floor(Math.random() * 80) + 20 : (Math.random() < 0.75 ? 1 : 0);
+        let rtInc   = isBuzz ? Math.floor(Math.random() * 30) + 5  : (Math.random() < 0.35 ? 1 : 0);
         if (likeInc === 0 && rtInc === 0) return;
 
         const updated = Storage.updatePost(postId, { likes: post.likes + likeInc, retweets: post.retweets + rtInc });
         if (!updated) return;
         Timeline.updatePostReactions(postId, updated.likes, updated.retweets);
 
-        // Notification list: occasionally show a random liker
-        if (likeInc > 0 && Math.random() < 0.35) {
+        if (likeInc > 0 && Math.random() < 0.45) {
           const u = Characters.getRandomPseudoReplier();
           NotifList.add({
             type: 'like',
@@ -31,26 +30,26 @@ const Reactions = {
 
         if (isBuzz && updated.likes > 0 && updated.likes % 50 === 0) {
           Notifications.show(`${updated.likes}件のいいね！🔥`, 'buzz');
-        } else if (!isBuzz && likeInc > 0 && updated.likes % 10 === 0 && updated.likes > 0) {
+        } else if (!isBuzz && likeInc > 0 && updated.likes % 5 === 0 && updated.likes > 0) {
           Notifications.show('いいねが増えています ✨', 'reaction');
         }
-      }, Math.random() * maxDelay + 5000);
+      }, Math.random() * maxDelay + 3000);
     }
   },
 
   schedulePseudoReplies(postId) {
-    const count = Math.floor(Math.random() * 3);
+    const count = Math.floor(Math.random() * 3) + 1;
     for (let i = 0; i < count; i++) {
       setTimeout(() => {
         const post = Storage.getPost(postId);
         if (!post) return;
         const replier = Characters.getRandomPseudoReplier();
         const reply = {
-          id:              `reply_${Date.now()}_${Math.random().toString(36).slice(2)}`,
-          type:            'reply', parentId: postId,
-          author:          replier,
-          text:            Characters.getRandomPseudoReply(),
-          timestamp:       Date.now(),
+          id:        `reply_${Date.now()}_${Math.random().toString(36).slice(2)}`,
+          type:      'reply', parentId: postId,
+          author:    replier,
+          text:      Characters.getRandomPseudoReply(),
+          timestamp: Date.now(),
           likes: 0, retweets: 0, replies: 0,
           isUserPost: false, isCharacterPost: false
         };
@@ -67,13 +66,13 @@ const Reactions = {
           actionText: 'あなたの投稿に返信しました',
           postPreview: post.text ? post.text.slice(0, 60) : ''
         });
-      }, 40000 + Math.random() * 200000 + i * 30000);
+      }, 10000 + Math.random() * 80000 + i * 20000);
     }
   },
 
   scheduleCharacterInteraction(postId) {
     // 薫 — いいね
-    if (Math.random() < 0.7) {
+    if (Math.random() < 0.88) {
       setTimeout(() => {
         const post = Storage.getPost(postId);
         if (!post) return;
@@ -87,11 +86,11 @@ const Reactions = {
             postPreview: post.text ? post.text.slice(0, 60) : ''
           });
         }
-      }, 15000 + Math.random() * 45000);
+      }, 5000 + Math.random() * 25000);
     }
 
     // 薫 — リプライ
-    if (Math.random() < 0.45) {
+    if (Math.random() < 0.65) {
       setTimeout(() => {
         const post = Storage.getPost(postId);
         if (!post) return;
@@ -111,11 +110,11 @@ const Reactions = {
           actionText: 'あなたの投稿に返信しました',
           postPreview: post.text ? post.text.slice(0, 60) : ''
         });
-      }, 60000 + Math.random() * 120000);
+      }, 20000 + Math.random() * 70000);
     }
 
     // 霞 — いいね
-    if (Math.random() < 0.4) {
+    if (Math.random() < 0.65) {
       setTimeout(() => {
         const post = Storage.getPost(postId);
         if (!post) return;
@@ -129,11 +128,11 @@ const Reactions = {
             postPreview: post.text ? post.text.slice(0, 60) : ''
           });
         }
-      }, 60000 + Math.random() * 120000);
+      }, 30000 + Math.random() * 60000);
     }
 
     // 霞 — リプライ
-    if (Math.random() < 0.25) {
+    if (Math.random() < 0.40) {
       setTimeout(() => {
         const post = Storage.getPost(postId);
         if (!post) return;
@@ -153,7 +152,7 @@ const Reactions = {
           actionText: 'あなたの投稿に返信しました',
           postPreview: post.text ? post.text.slice(0, 60) : ''
         });
-      }, 120000 + Math.random() * 180000);
+      }, 60000 + Math.random() * 120000);
     }
   }
 };
