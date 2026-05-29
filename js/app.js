@@ -1,4 +1,4 @@
-(function(){try{var V='20260529c';if(localStorage.getItem('_appv')!==V){localStorage.setItem('_appv',V);window.location.reload(true);}}catch(e){}})();
+(function(){try{var V='20260529d';if(localStorage.getItem('_appv')!==V){localStorage.setItem('_appv',V);window.location.reload(true);}}catch(e){}})();
 
 document.addEventListener('DOMContentLoaded', () => {
   Notifications.init(document.getElementById('notifications'));
@@ -81,6 +81,12 @@ document.addEventListener('DOMContentLoaded', () => {
     Reactions.scheduleReactions(post.id, buzzType);
     Reactions.schedulePseudoReplies(post.id);
     Reactions.scheduleCharacterInteraction(post.id);
+    // 投稿の1秒後に最初の謎ユーザー通知を確実に届ける
+    const _previewText = text.slice(0, 60);
+    setTimeout(() => {
+      const u = Characters.getRandomPseudoReplier();
+      NotifList.add({ type: 'like', actorName: u.name, isCharacter: null, actionText: 'あなたの投稿をいいねしました', postPreview: _previewText });
+    }, 1000);
   });
 
   document.getElementById('timeline').addEventListener('click', e => {
