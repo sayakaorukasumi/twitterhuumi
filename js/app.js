@@ -4,6 +4,7 @@ document.addEventListener('DOMContentLoaded', () => {
   Timeline.init(document.getElementById('timeline'));
   applySettings();
   if (Storage.getPosts().length === 0) seedInitialPosts();
+  catchUpWhileAway();
 
   document.querySelectorAll('[data-view]').forEach(item => {
     item.addEventListener('click', e => {
@@ -344,6 +345,132 @@ function scheduleCharacterPosts() {
   }
   nextKaoru();
   nextKasumi();
+}
+
+// ===== 留守中キャッチアップ =====
+// このアプリはサーバーを持たないため、閉じている間は薫・霞のタイマーが止まる。
+// そこで「前回開いてから経過した時間」を元に、留守中に投稿・反応があったかのように
+// 過去の時刻付きでまとめて生成する。これで久しぶりに開いても新着が溜まって見える。
+function catchUpWhileAway() {
+  const KEY = 'twitterhuumi_last_visit';
+  const now = Date.now();
+  const stored = parseInt(localStorage.getItem(KEY), 10);
+  localStorage.setItem(KEY, String(now));
+
+  // 初回訪問は記録だけ。25分未満ならライブのタイマーに任せる
+  if (!stored || isNaN(stored)) return;
+  const elapsed = now - stored;
+  if (elapsed < 1500000) return;
+
+  // 経過時間内のランダムな時刻（i番目のスロット内）を返す
+  const slotTs = (i, count) => {
+    const start = stored + (elapsed * i / count);
+    const end   = stored + (elapsed * (i + 1) / count);
+    return Math.floor(start + Math.random() * (end - start));
+  };
+
+  // 留守中に溜める通知（自前のタイムスタンプ付きで後でまとめて反映）
+  const pendingNotifs = [];
+  const pushNotif = (n, ts) => pendingNotifs.push({
+    ...n, id: `nf_${ts}_${Math.random().toString(36).slice(2)}`, timestamp: ts
+  });
+
+  // ---- 薫・霞の留守中投稿（薫:約3h / 霞:約3.5h ごと・各最大4件）----
+  const kaoruCount  = Math.min(Math.floor(elapsed / 10800000), 4);
+  const kasumiCount = Math.min(Math.floor(elapsed / 12600000), 4);
+
+  for (let i = 0; i < kaoruCount; i++) {
+    const ts = slotTs(i, kaoruCount);
+    const pd = Characters.getRandomKaoruPost();
+    Storage.addPost({
+      id: `kaoru_away_${ts}_${i}`, type: 'post', parentId: null,
+      text: pd.text, media: pd.image ? { type: 'image', data: pd.image } : null,
+      timestamp: ts,
+      likes: Math.floor(Math.random() * 4) + 1, retweets: Math.floor(Math.random() * 2),
+      replies: 0, isUserPost: false, isCharacterPost: true,
+      author: { name: '薫', handle: '@kaoru_here', isCharacter: 'kaoru' }
+    });
+  }
+  for (let i = 0; i < kasumiCount; i++) {
+    const ts = slotTs(i, kasumiCount);
+    const pd = Characters.getRandomKasumiPost();
+    Storage.addPost({
+      id: `kasumi_away_${ts}_${i}`, type: 'post', parentId: null,
+      text: pd.text, media: pd.image ? { type: 'image', data: pd.image } : null,
+      timestamp: ts,
+      likes: Math.floor(Math.random() * 3), retweets: Math.floor(Math.random() * 2),
+      replies: 0, isUserPost: false, isCharacterPost: true,
+      author: { name: '霞', handle: '@kasumi_watch', isCharacter: 'kasumi' }
+    });
+  }
+
+  // ---- 留守中、ユーザーの最近(24h以内)の投稿に届いた反応 ----
+  const recentUserPosts = Storage.getPosts()
+    .filter(p => p.isUserPost && !p.parentId && (now - p.timestamp) < 86400000)
+    .slice(0, 3);
+
+  recentUserPosts.forEach((p, idx) => {
+    const preview = p.text ? p.text.slice(0, 60) : '';
+    // いいねの蓄積（30分あたり1〜3・最大40）
+    const likeGain = Math.min(Math.floor(elapsed / 1800000) * (Math.floor(Math.random() * 3) + 1), 40);
+    let addedReplies = 0;
+
+    if (Math.random() < 0.55) {
+      const ts = stored + Math.floor(Math.random() * elapsed);
+      Storage.addPost({
+        id: `kaoru_away_reply_${ts}_${idx}`, type: 'reply', parentId: p.id,
+        author: { name: '薫', handle: '@kaoru_here', isCharacter: 'kaoru' },
+        text: Characters.getRandomKaoruReply(), timestamp: ts,
+        likes: 0, retweets: 0, replies: 0, isCharacterPost: true
+      });
+      addedReplies++;
+      pushNotif({ type: 'reply', actorName: '薫', isCharacter: 'kaoru', actionText: 'あなたの投稿に返信しました', postPreview: preview }, ts);
+    }
+    if (Math.random() < 0.4) {
+      const ts = stored + Math.floor(Math.random() * elapsed);
+      Storage.addPost({
+        id: `kasumi_away_reply_${ts}_${idx}`, type: 'reply', parentId: p.id,
+        author: { name: '霞', handle: '@kasumi_watch', isCharacter: 'kasumi' },
+        text: Characters.getRandomKasumiReply(), timestamp: ts,
+        likes: 0, retweets: 0, replies: 0, isCharacterPost: true
+      });
+      addedReplies++;
+      pushNotif({ type: 'reply', actorName: '霞', isCharacter: 'kasumi', actionText: 'あなたの投稿に返信しました', postPreview: preview }, ts);
+    }
+    const pseudoCount = Math.random() < 0.6 ? (Math.floor(Math.random() * 2) + 1) : 0;
+    for (let j = 0; j < pseudoCount; j++) {
+      const u = Characters.getRandomPseudoReplier();
+      const ts = stored + Math.floor(Math.random() * elapsed);
+      Storage.addPost({
+        id: `pseudo_away_reply_${ts}_${idx}_${j}`, type: 'reply', parentId: p.id,
+        author: u, text: Characters.getRandomPseudoReply(), timestamp: ts,
+        likes: 0, retweets: 0, replies: 0, isUserPost: false, isCharacterPost: false
+      });
+      addedReplies++;
+      pushNotif({ type: 'reply', actorName: u.name, isCharacter: null, actionText: 'あなたの投稿に返信しました', postPreview: preview }, ts);
+    }
+
+    if (likeGain > 0 || addedReplies > 0) {
+      const fresh = Storage.getPost(p.id);
+      if (fresh) {
+        Storage.updatePost(p.id, {
+          likes:   (fresh.likes || 0) + likeGain,
+          replies: (fresh.replies || 0) + addedReplies
+        });
+      }
+      if (likeGain > 0) {
+        const ts = stored + Math.floor(Math.random() * elapsed);
+        pushNotif({ type: 'like', actorName: '薫', isCharacter: 'kaoru', actionText: 'あなたの投稿をいいねしました', postPreview: preview }, ts);
+      }
+    }
+  });
+
+  // タイムラインと通知を更新（通知は古い順に入れて新しい順に並ぶよう）
+  Timeline.render(Storage.getPosts());
+  if (pendingNotifs.length) {
+    pendingNotifs.sort((a, b) => a.timestamp - b.timestamp).forEach(n => Storage.addNotification(n));
+    NotifList.refresh(pendingNotifs.length);
+  }
 }
 
 function reactivateRecentPosts() {

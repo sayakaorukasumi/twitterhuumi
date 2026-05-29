@@ -23,6 +23,13 @@ const NotifList = {
     this._updateBadges();
   },
 
+  // 留守中に溜まった通知をまとめて反映する（各通知は自前のタイムスタンプを持つ）
+  refresh(addUnread = 0) {
+    if (addUnread > 0) this._unread += addUnread;
+    this._render();
+    this._updateBadges();
+  },
+
   _updateBadges() {
     ['notif-badge', 'notif-badge-mobile'].forEach(id => {
       const el = document.getElementById(id);

@@ -13,11 +13,15 @@ const Timeline = {
 
   render(posts) {
     this.container.innerHTML = '';
-    const topLevel = posts.filter(p => !p.parentId);
+    const topLevel = posts
+      .filter(p => !p.parentId)
+      .sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0));
     if (topLevel.length === 0) { this.showEmpty(); return; }
     const replies = posts.filter(p => p.parentId);
     topLevel.forEach(post => {
-      const postReplies = replies.filter(r => r.parentId === post.id);
+      const postReplies = replies
+        .filter(r => r.parentId === post.id)
+        .sort((a, b) => (a.timestamp || 0) - (b.timestamp || 0));
       this.container.appendChild(this.createPostEl(post, postReplies));
     });
   },
