@@ -475,11 +475,17 @@ function catchUpWhileAway() {
 
 function reactivateRecentPosts() {
   const now = Date.now();
-  const userPosts = Storage.getPosts()
+  const allPosts = Storage.getPosts();
+  const userPosts = allPosts
     .filter(p => p.isUserPost && !p.parentId && (now - p.timestamp) < 5400000);
   userPosts.forEach((p, i) => {
     Reactions.scheduleReactions(p.id, p.isBuzz);
     setTimeout(() => Reactions.scheduleCharacterInteraction(p.id), i * 8000 + Math.random() * 5000);
+    // リプライが少なければ謎ユーザーのリプライも再スケジュール
+    const existingReplies = allPosts.filter(r => r.parentId === p.id && !r.isCharacterPost).length;
+    if (existingReplies < 2) {
+      setTimeout(() => Reactions.schedulePseudoReplies(p.id), i * 3000 + 1000);
+    }
   });
 }
 

@@ -80,7 +80,7 @@ const Reactions = {
           actionText: 'あなたの投稿に返信しました',
           postPreview: post.text ? post.text.slice(0, 60) : ''
         });
-      }, 10000 + Math.random() * 80000 + i * 20000);
+      }, 3000 + Math.random() * 20000 + i * 12000);
     }
   },
 
