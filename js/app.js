@@ -165,7 +165,7 @@ function switchView(name) {
   document.querySelectorAll(`[data-view="${name}"]`).forEach(n => n.classList.add('active'));
   document.querySelectorAll('.view').forEach(v => { v.hidden = true; });
   document.getElementById(`view-${name}`).hidden = false;
-  if (name === 'notifs') NotifList.clearBadge();
+  if (name === 'notifs') { NotifList._render(); NotifList.clearBadge(); }
 }
 
 function openReplyModal(postId) {
@@ -508,17 +508,18 @@ function catchUpWhileAway() {
   }
 }
 
+const _repliedThisSession = new Set();
+
 function reactivateRecentPosts() {
   const now = Date.now();
-  const allPosts = Storage.getPosts();
-  const userPosts = allPosts
+  const userPosts = Storage.getPosts()
     .filter(p => p.isUserPost && !p.parentId && (now - p.timestamp) < 5400000);
   userPosts.forEach((p, i) => {
     Reactions.scheduleReactions(p.id, p.isBuzz);
     setTimeout(() => Reactions.scheduleCharacterInteraction(p.id), i * 8000 + Math.random() * 5000);
-    // リプライが少なければ謎ユーザーのリプライも再スケジュール
-    const existingReplies = allPosts.filter(r => r.parentId === p.id && !r.isCharacterPost).length;
-    if (existingReplies < 2) {
+    // セッションごとに1回だけ謎ユーザーリプライをスケジュール（storage件数に依存しない）
+    if (!_repliedThisSession.has(p.id)) {
+      _repliedThisSession.add(p.id);
       setTimeout(() => Reactions.schedulePseudoReplies(p.id), i * 3000 + 1000);
     }
   });

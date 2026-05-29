@@ -1,17 +1,20 @@
 const NotifList = {
   container: null,
   _unread: 0,
+  _UNREAD_KEY: 'twitterhuumi_unread',
 
   init(container) {
     this.container = container;
-    this._unread = 0;
+    this._unread = parseInt(localStorage.getItem(this._UNREAD_KEY) || '0', 10);
     this._render();
+    this._updateBadges();
   },
 
   add(notif) {
     const stored = { ...notif, id: `nf_${Date.now()}_${Math.random().toString(36).slice(2)}`, timestamp: Date.now() };
     Storage.addNotification(stored);
     this._unread++;
+    try { localStorage.setItem(this._UNREAD_KEY, String(this._unread)); } catch {}
     this._updateBadges();
     const empty = this.container.querySelector('.notif-empty');
     if (empty) empty.remove();
@@ -20,6 +23,7 @@ const NotifList = {
 
   clearBadge() {
     this._unread = 0;
+    try { localStorage.setItem(this._UNREAD_KEY, '0'); } catch {}
     this._updateBadges();
   },
 
