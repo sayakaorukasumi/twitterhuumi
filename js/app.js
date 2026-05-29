@@ -488,30 +488,49 @@ function startLikeHeartbeat() {
     const posts = Storage.getPosts().filter(p => p.isUserPost && !p.parentId);
     if (!posts.length) return;
     const post = posts[Math.floor(Math.random() * Math.min(posts.length, 5))];
+    const preview = post.text ? post.text.slice(0, 60) : '';
     const r = Math.random();
-    if (r < 0.15) {
-      const updated = Storage.updatePost(post.id, { likes: post.likes + 1 });
+
+    if (r < 0.05) {
+      // 薫いいね（未いいね時のみ）
+      if (post.likedByKaoru) return;
+      const updated = Storage.updatePost(post.id, { likes: post.likes + 1, likedByKaoru: true });
       if (updated) {
         Timeline.updatePostReactions(post.id, updated.likes);
         Notifications.show('薫がいいねしました 🌸', 'like');
-        NotifList.add({ type: 'like', actorName: '薫', isCharacter: 'kaoru', actionText: 'あなたの投稿をいいねしました', postPreview: post.text ? post.text.slice(0, 60) : '' });
+        NotifList.add({ type: 'like', actorName: '薫', isCharacter: 'kaoru', actionText: 'あなたの投稿をいいねしました', postPreview: preview });
       }
-    } else if (r < 0.25) {
-      const updated = Storage.updatePost(post.id, { likes: post.likes + 1 });
+    } else if (r < 0.10) {
+      // 霞いいね（未いいね時のみ）
+      if (post.likedByKasumi) return;
+      const updated = Storage.updatePost(post.id, { likes: post.likes + 1, likedByKasumi: true });
       if (updated) {
         Timeline.updatePostReactions(post.id, updated.likes);
         Notifications.show('霞がいいねしました ❄️', 'like');
-        NotifList.add({ type: 'like', actorName: '霞', isCharacter: 'kasumi', actionText: 'あなたの投稿をいいねしました', postPreview: post.text ? post.text.slice(0, 60) : '' });
+        NotifList.add({ type: 'like', actorName: '霞', isCharacter: 'kasumi', actionText: 'あなたの投稿をいいねしました', postPreview: preview });
       }
-    } else if (r < 0.65) {
-      const updated = Storage.updatePost(post.id, { likes: post.likes + 1 });
+    } else if (r < 0.75) {
+      // 謎ユーザーからのいいね（2〜6件まとめて）
+      const likeInc = Math.floor(Math.random() * 5) + 2;
+      const updated = Storage.updatePost(post.id, { likes: post.likes + likeInc });
       if (updated) {
         Timeline.updatePostReactions(post.id, updated.likes);
-        if (Math.random() < 0.5) {
-          const u = Characters.getRandomPseudoReplier();
-          NotifList.add({ type: 'like', actorName: u.name, isCharacter: null, actionText: 'あなたの投稿をいいねしました', postPreview: post.text ? post.text.slice(0, 60) : '' });
+        const u = Characters.getRandomPseudoReplier();
+        NotifList.add({ type: 'like', actorName: u.name, isCharacter: null, actionText: 'あなたの投稿をいいねしました', postPreview: preview });
+        if (updated.likes > 0 && updated.likes % 10 === 0) {
+          Notifications.show('いいねが増えています ✨', 'reaction');
         }
       }
+    } else if (r < 0.88) {
+      // 謎ユーザーからのRT
+      const rtInc = Math.random() < 0.6 ? 1 : 2;
+      const updated = Storage.updatePost(post.id, { retweets: post.retweets + rtInc });
+      if (updated) {
+        Timeline.updatePostReactions(post.id, undefined, updated.retweets);
+        const u = Characters.getRandomPseudoReplier();
+        NotifList.add({ type: 'retweet', actorName: u.name, isCharacter: null, actionText: 'あなたの投稿をリツイートしました', postPreview: preview });
+      }
     }
+    // r >= 0.88 → 何もなし（静かな時間帯）
   }, 180000);
 }

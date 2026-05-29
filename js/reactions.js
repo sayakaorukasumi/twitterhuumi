@@ -55,7 +55,7 @@ const Reactions = {
   },
 
   schedulePseudoReplies(postId) {
-    const count = Math.floor(Math.random() * 3) + 1;
+    const count = Math.floor(Math.random() * 4) + 2;  // 2〜5件
     for (let i = 0; i < count; i++) {
       setTimeout(() => {
         const post = Storage.getPost(postId);
@@ -85,11 +85,12 @@ const Reactions = {
   },
 
   scheduleCharacterInteraction(postId) {
+    // 薫いいね：1投稿につき1回のみ（likedByKaoru フラグで重複防止）
     if (Math.random() < 0.88) {
       setTimeout(() => {
         const post = Storage.getPost(postId);
-        if (!post) return;
-        const updated = Storage.updatePost(postId, { likes: post.likes + 1 });
+        if (!post || post.likedByKaoru) return;
+        const updated = Storage.updatePost(postId, { likes: post.likes + 1, likedByKaoru: true });
         if (updated) {
           Timeline.updatePostReactions(postId, updated.likes);
           Notifications.show('薫がいいねしました 🌸', 'like');
@@ -114,11 +115,12 @@ const Reactions = {
         NotifList.add({ type: 'reply', actorName: '薫', isCharacter: 'kaoru', actionText: 'あなたの投稿に返信しました', postPreview: post.text ? post.text.slice(0, 60) : '' });
       }, 20000 + Math.random() * 70000);
     }
+    // 霞いいね：1投稿につき1回のみ（likedByKasumi フラグで重複防止）
     if (Math.random() < 0.65) {
       setTimeout(() => {
         const post = Storage.getPost(postId);
-        if (!post) return;
-        const updated = Storage.updatePost(postId, { likes: post.likes + 1 });
+        if (!post || post.likedByKasumi) return;
+        const updated = Storage.updatePost(postId, { likes: post.likes + 1, likedByKasumi: true });
         if (updated) {
           Timeline.updatePostReactions(postId, updated.likes);
           Notifications.show('霞がいいねしました ❄️', 'like');
