@@ -189,5 +189,10 @@
   <script src="js/timeline.js?v=20260529b"></script>
   <script src="js/reactions.js?v=20260529b"></script>
   <script src="js/app.js?v=20260529b"></script>
+  <script>
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.register('sw.js').catch(function(){});
+    }
+  </script>
 </body>
 </html>
