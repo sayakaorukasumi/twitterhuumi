@@ -7,6 +7,9 @@ document.addEventListener('DOMContentLoaded', () => {
   applySettings();
   if (Storage.getPosts().length === 0) seedInitialPosts();
   catchUpWhileAway();
+  // バージョン確認用：新しいコードが読み込まれていれば呟くボタンが「呟く ✓」になる
+  const _sb = document.getElementById('post-submit');
+  if (_sb) _sb.textContent = '呟く ✓';
 
   document.querySelectorAll('[data-view]').forEach(item => {
     item.addEventListener('click', e => {
@@ -86,6 +89,7 @@ document.addEventListener('DOMContentLoaded', () => {
     setTimeout(() => {
       const u = Characters.getRandomPseudoReplier();
       NotifList.add({ type: 'like', actorName: u.name, isCharacter: null, actionText: 'あなたの投稿をいいねしました', postPreview: _previewText });
+      Notifications.show(u.name + 'がいいねしました', 'like');
     }, 1000);
   });
 
