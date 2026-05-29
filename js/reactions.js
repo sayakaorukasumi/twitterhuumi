@@ -10,7 +10,7 @@ const Reactions = {
     const isBig  = buzzType === 'big'  || buzzType === true;
     const isMini = buzzType === 'mini';
     const count    = isBig ? 30 : 25;
-    const maxDelay = isBig ? 120000 : (isMini ? 300000 : 600000);
+    const maxDelay = isBig ? 60000 : (isMini ? 90000 : 60000);
 
     for (let i = 0; i < count; i++) {
       setTimeout(() => {
