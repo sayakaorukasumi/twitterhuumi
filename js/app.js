@@ -89,7 +89,12 @@ document.addEventListener('DOMContentLoaded', () => {
     setTimeout(() => {
       const u = Characters.getRandomPseudoReplier();
       NotifList.add({ type: 'like', actorName: u.name, isCharacter: null, actionText: 'あなたの投稿をいいねしました', postPreview: _previewText });
-      Notifications.show(u.name + 'がいいねしました', 'like');
+      // バッジを直接強制表示（NotifListをバイパス）
+      ['notif-badge','notif-badge-mobile'].forEach(function(id){
+        var el=document.getElementById(id);
+        if(el){el.textContent=String(NotifList._unread||'?');el.removeAttribute('style');}
+      });
+      Notifications.show('🔔 unread='+NotifList._unread+' c='+(NotifList.container?'ok':'null'), 'default');
     }, 1000);
   });
 
