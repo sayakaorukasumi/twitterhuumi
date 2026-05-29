@@ -411,10 +411,44 @@ function catchUpWhileAway() {
 
   recentUserPosts.forEach((p, idx) => {
     const preview = p.text ? p.text.slice(0, 60) : '';
-    // いいねの蓄積（30分あたり1〜3・最大40）
-    const likeGain = Math.min(Math.floor(elapsed / 1800000) * (Math.floor(Math.random() * 3) + 1), 40);
-    let addedReplies = 0;
+    const fresh0 = Storage.getPost(p.id) || p;
+    let likeAdd = 0, rtAdd = 0, addedReplies = 0;
+    let flagKaoru = false, flagKasumi = false;
 
+    // --- 謎ユーザーからのいいね（30分あたり2〜5・最大50）---
+    const pseudoLikes = Math.min((Math.floor(elapsed / 1800000) + 1) * (Math.floor(Math.random() * 4) + 2), 50);
+    likeAdd += pseudoLikes;
+    // 通知は4いいねごとに1件・最大6件、それぞれ別の謎ユーザー名義
+    const likeNotifCount = Math.min(Math.ceil(pseudoLikes / 4), 6);
+    for (let n = 0; n < likeNotifCount; n++) {
+      const u = Characters.getRandomPseudoReplier();
+      const ts = stored + Math.floor(Math.random() * elapsed);
+      pushNotif({ type: 'like', actorName: u.name, isCharacter: null, actionText: 'あなたの投稿をいいねしました', postPreview: preview }, ts);
+    }
+
+    // --- 謎ユーザーからのRT（0〜3件）---
+    const pseudoRts = Math.min(Math.floor(elapsed / 5400000), 2) + (Math.random() < 0.5 ? 1 : 0);
+    rtAdd += pseudoRts;
+    for (let n = 0; n < pseudoRts; n++) {
+      const u = Characters.getRandomPseudoReplier();
+      const ts = stored + Math.floor(Math.random() * elapsed);
+      pushNotif({ type: 'retweet', actorName: u.name, isCharacter: null, actionText: 'あなたの投稿をリツイートしました', postPreview: preview }, ts);
+    }
+
+    // --- 薫のいいね（1投稿1回まで）---
+    if (!fresh0.likedByKaoru && Math.random() < 0.8) {
+      likeAdd += 1; flagKaoru = true;
+      const ts = stored + Math.floor(Math.random() * elapsed);
+      pushNotif({ type: 'like', actorName: '薫', isCharacter: 'kaoru', actionText: 'あなたの投稿をいいねしました', postPreview: preview }, ts);
+    }
+    // --- 霞のいいね（1投稿1回まで）---
+    if (!fresh0.likedByKasumi && Math.random() < 0.6) {
+      likeAdd += 1; flagKasumi = true;
+      const ts = stored + Math.floor(Math.random() * elapsed);
+      pushNotif({ type: 'like', actorName: '霞', isCharacter: 'kasumi', actionText: 'あなたの投稿をいいねしました', postPreview: preview }, ts);
+    }
+
+    // --- 薫のリプライ ---
     if (Math.random() < 0.55) {
       const ts = stored + Math.floor(Math.random() * elapsed);
       Storage.addPost({
@@ -426,6 +460,7 @@ function catchUpWhileAway() {
       addedReplies++;
       pushNotif({ type: 'reply', actorName: '薫', isCharacter: 'kaoru', actionText: 'あなたの投稿に返信しました', postPreview: preview }, ts);
     }
+    // --- 霞のリプライ ---
     if (Math.random() < 0.4) {
       const ts = stored + Math.floor(Math.random() * elapsed);
       Storage.addPost({
@@ -437,8 +472,9 @@ function catchUpWhileAway() {
       addedReplies++;
       pushNotif({ type: 'reply', actorName: '霞', isCharacter: 'kasumi', actionText: 'あなたの投稿に返信しました', postPreview: preview }, ts);
     }
-    const pseudoCount = Math.random() < 0.6 ? (Math.floor(Math.random() * 2) + 1) : 0;
-    for (let j = 0; j < pseudoCount; j++) {
+    // --- 謎ユーザーのリプライ（1〜2件）---
+    const pseudoReplyCount = Math.random() < 0.6 ? (Math.floor(Math.random() * 2) + 1) : 0;
+    for (let j = 0; j < pseudoReplyCount; j++) {
       const u = Characters.getRandomPseudoReplier();
       const ts = stored + Math.floor(Math.random() * elapsed);
       Storage.addPost({
@@ -450,18 +486,17 @@ function catchUpWhileAway() {
       pushNotif({ type: 'reply', actorName: u.name, isCharacter: null, actionText: 'あなたの投稿に返信しました', postPreview: preview }, ts);
     }
 
-    if (likeGain > 0 || addedReplies > 0) {
-      const fresh = Storage.getPost(p.id);
-      if (fresh) {
-        Storage.updatePost(p.id, {
-          likes:   (fresh.likes || 0) + likeGain,
-          replies: (fresh.replies || 0) + addedReplies
-        });
-      }
-      if (likeGain > 0) {
-        const ts = stored + Math.floor(Math.random() * elapsed);
-        pushNotif({ type: 'like', actorName: '薫', isCharacter: 'kaoru', actionText: 'あなたの投稿をいいねしました', postPreview: preview }, ts);
-      }
+    // 投稿のカウントをまとめて更新
+    const fresh = Storage.getPost(p.id);
+    if (fresh) {
+      const patch = {
+        likes:    (fresh.likes || 0) + likeAdd,
+        retweets: (fresh.retweets || 0) + rtAdd,
+        replies:  (fresh.replies || 0) + addedReplies
+      };
+      if (flagKaoru)  patch.likedByKaoru  = true;
+      if (flagKasumi) patch.likedByKasumi = true;
+      Storage.updatePost(p.id, patch);
     }
   });
 
