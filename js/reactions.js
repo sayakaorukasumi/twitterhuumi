@@ -36,6 +36,7 @@ const Reactions = {
 
         if (likeInc > 0 && Math.random() < 0.45) {
           const u = Characters.getRandomPseudoReplier();
+          Notifications.show(`${u.name}さんがいいねしました`, 'like');
           NotifList.add({
             type: 'like', actorName: u.name, isCharacter: null,
             actionText: 'あなたの投稿をいいねしました',

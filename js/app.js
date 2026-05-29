@@ -522,6 +522,7 @@ function startLikeHeartbeat() {
       if (updated) {
         Timeline.updatePostReactions(post.id, updated.likes);
         const u = Characters.getRandomPseudoReplier();
+        Notifications.show(`${u.name}さんがいいねしました`, 'like');
         NotifList.add({ type: 'like', actorName: u.name, isCharacter: null, actionText: 'あなたの投稿をいいねしました', postPreview: preview });
         if (updated.likes > 0 && updated.likes % 10 === 0) {
           Notifications.show('いいねが増えています ✨', 'reaction');
@@ -534,6 +535,7 @@ function startLikeHeartbeat() {
       if (updated) {
         Timeline.updatePostReactions(post.id, undefined, updated.retweets);
         const u = Characters.getRandomPseudoReplier();
+        Notifications.show(`${u.name}さんがリツイートしました 🔁`, 'reaction');
         NotifList.add({ type: 'retweet', actorName: u.name, isCharacter: null, actionText: 'あなたの投稿をリツイートしました', postPreview: preview });
       }
     }
