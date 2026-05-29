@@ -1,4 +1,4 @@
-(function(){try{var V='20260529d';if(localStorage.getItem('_appv')!==V){localStorage.setItem('_appv',V);window.location.reload(true);}}catch(e){}})();
+(function(){try{var V='20260529e';if(localStorage.getItem('_appv')!==V){localStorage.setItem('_appv',V);window.location.reload(true);}}catch(e){}})();
 
 document.addEventListener('DOMContentLoaded', () => {
   Notifications.init(document.getElementById('notifications'));
