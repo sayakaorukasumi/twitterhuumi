@@ -1,4 +1,4 @@
-(function(){try{var V='20260529f';if(localStorage.getItem('_appv')!==V){localStorage.setItem('_appv',V);window.location.reload(true);}}catch(e){}})();
+(function(){try{var V='20260529g';if(localStorage.getItem('_appv')!==V){localStorage.setItem('_appv',V);window.location.reload(true);}}catch(e){}})();
 
 document.addEventListener('DOMContentLoaded', () => {
   Notifications.init(document.getElementById('notifications'));
@@ -7,9 +7,9 @@ document.addEventListener('DOMContentLoaded', () => {
   applySettings();
   if (Storage.getPosts().length === 0) seedInitialPosts();
   catchUpWhileAway();
-  // バージョン確認用：新しいコードが読み込まれていれば呟くボタンが「呟く ✓」になる
-  const _sb = document.getElementById('post-submit');
-  if (_sb) _sb.textContent = '呟く ✓';
+  // バージョン確認用：ホーム見出しに現在のコードバージョンを表示
+  const _hdr = document.querySelector('#view-home .timeline-header h1');
+  if (_hdr) _hdr.textContent = 'ホーム (g)';
 
   document.querySelectorAll('[data-view]').forEach(item => {
     item.addEventListener('click', e => {
