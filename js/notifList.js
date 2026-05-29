@@ -16,6 +16,7 @@ const NotifList = {
     this._unread++;
     try { localStorage.setItem(this._UNREAD_KEY, String(this._unread)); } catch {}
     this._updateBadges();
+    if (!this.container) return;
     const empty = this.container.querySelector('.notif-empty');
     if (empty) empty.remove();
     this.container.insertBefore(this._makeEl(stored), this.container.firstChild);

@@ -34,8 +34,7 @@ const Reactions = {
         if (!updated) return;
         Timeline.updatePostReactions(postId, updated.likes, updated.retweets);
 
-        // 5tick ごと（インデックス 0,5,10,15,20）に通知を出す → 1投稿に確実に5件
-        if (likeInc > 0 && i % 5 === 0) {
+        if (likeInc > 0 && i % 3 === 0) {
           const u = Characters.getRandomPseudoReplier();
           NotifList.add({
             type: 'like', actorName: u.name, isCharacter: null,
@@ -43,7 +42,7 @@ const Reactions = {
             postPreview: post.text ? post.text.slice(0, 60) : ''
           });
         }
-        if (rtInc > 0 && Math.random() < 0.6) {
+        if (rtInc > 0) {
           const u = Characters.getRandomPseudoReplier();
           NotifList.add({
             type: 'retweet', actorName: u.name, isCharacter: null,
