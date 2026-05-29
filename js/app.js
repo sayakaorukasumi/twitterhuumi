@@ -1,3 +1,5 @@
+(function(){try{var V='20260529c';if(localStorage.getItem('_appv')!==V){localStorage.setItem('_appv',V);window.location.reload(true);}}catch(e){}})();
+
 document.addEventListener('DOMContentLoaded', () => {
   Notifications.init(document.getElementById('notifications'));
   NotifList.init(document.getElementById('notif-list'));
