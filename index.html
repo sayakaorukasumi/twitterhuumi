@@ -13,7 +13,17 @@
   <link rel="apple-touch-icon" href="AEBEF95B-F4F6-4E43-B44F-D6ACDF9D6631.png">
   <link rel="stylesheet" href="styles.css">
   <script>
-    (function(){try{var V='20260529e';if(localStorage.getItem('_appv')!==V){localStorage.setItem('_appv',V);window.location.reload(true);}}catch(e){}})();
+    (function(){
+      try{
+        // 古いService Workerとキャッシュを完全に削除（古いJSが配信され続ける問題の対策）
+        if('serviceWorker' in navigator){
+          navigator.serviceWorker.getRegistrations().then(function(rs){rs.forEach(function(r){r.unregister();});});
+        }
+        if(window.caches&&caches.keys){caches.keys().then(function(ks){ks.forEach(function(k){caches.delete(k);});});}
+        var V='20260529f';
+        if(localStorage.getItem('_appv')!==V){localStorage.setItem('_appv',V);window.location.reload(true);}
+      }catch(e){}
+    })();
   </script>
 </head>
 <body>
@@ -182,17 +192,12 @@
 
   <div id="notifications" class="notifications-container"></div>
 
-  <script src="js/storage.js?v=20260529e"></script>
-  <script src="js/characters.js?v=20260529e"></script>
-  <script src="js/notifications.js?v=20260529e"></script>
-  <script src="js/notifList.js?v=20260529e"></script>
-  <script src="js/timeline.js?v=20260529e"></script>
-  <script src="js/reactions.js?v=20260529e"></script>
-  <script src="js/app.js?v=20260529e"></script>
-  <script>
-    if ('serviceWorker' in navigator) {
-      navigator.serviceWorker.register('sw.js').catch(function(){});
-    }
-  </script>
+  <script src="js/storage.js?v=20260529f"></script>
+  <script src="js/characters.js?v=20260529f"></script>
+  <script src="js/notifications.js?v=20260529f"></script>
+  <script src="js/notifList.js?v=20260529f"></script>
+  <script src="js/timeline.js?v=20260529f"></script>
+  <script src="js/reactions.js?v=20260529f"></script>
+  <script src="js/app.js?v=20260529f"></script>
 </body>
 </html>
