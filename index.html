@@ -23,7 +23,7 @@
           navigator.serviceWorker.getRegistrations().then(function(rs){rs.forEach(function(r){r.unregister();});});
         }
         if(window.caches&&caches.keys){caches.keys().then(function(ks){ks.forEach(function(k){caches.delete(k);});});}
-        var V='20260529i';
+        var V='20260529j';
         if(localStorage.getItem('_appv')!==V){localStorage.setItem('_appv',V);window.location.reload(true);}
       }catch(e){}
     })();
@@ -195,12 +195,12 @@
 
   <div id="notifications" class="notifications-container"></div>
 
-  <script src="js/storage.js?v=20260529i"></script>
-  <script src="js/characters.js?v=20260529i"></script>
-  <script src="js/notifications.js?v=20260529i"></script>
-  <script src="js/notifList.js?v=20260529i"></script>
-  <script src="js/timeline.js?v=20260529i"></script>
-  <script src="js/reactions.js?v=20260529i"></script>
-  <script src="js/app.js?v=20260529i"></script>
+  <script src="js/storage.js?v=20260529j"></script>
+  <script src="js/characters.js?v=20260529j"></script>
+  <script src="js/notifications.js?v=20260529j"></script>
+  <script src="js/notifList.js?v=20260529j"></script>
+  <script src="js/timeline.js?v=20260529j"></script>
+  <script src="js/reactions.js?v=20260529j"></script>
+  <script src="js/app.js?v=20260529j"></script>
 </body>
 </html>
