@@ -1,4 +1,4 @@
-(function(){try{var V='20260529j';if(localStorage.getItem('_appv')!==V){localStorage.setItem('_appv',V);window.location.reload(true);}}catch(e){}})();
+(function(){try{var V='20260530a';if(localStorage.getItem('_appv')!==V){localStorage.setItem('_appv',V);window.location.reload(true);}}catch(e){}})();
 
 document.addEventListener('DOMContentLoaded', () => {
   Notifications.init(document.getElementById('notifications'));
@@ -34,19 +34,23 @@ document.addEventListener('DOMContentLoaded', () => {
   mediaInput.addEventListener('change', e => {
     const file = e.target.files[0];
     if (!file) return;
-    const isVideo = file.type.startsWith('video/');
+    if (file.type.startsWith('video/')) {
+      Notifications.show('動画は保存できません。画像を選んでください', 'default');
+      mediaInput.value = '';
+      return;
+    }
     const reader = new FileReader();
     reader.onload = ev => {
-      pendingMedia = { type: isVideo ? 'video' : 'image', data: ev.target.result };
-      mediaPreview.innerHTML = isVideo
-        ? `<div class="preview-wrap"><video src="${ev.target.result}" class="preview-media" controls></video></div>`
-        : `<div class="preview-wrap"><img src="${ev.target.result}" class="preview-media" alt="プレビュー"></div>`;
-      const btn = document.createElement('button');
-      btn.className = 'remove-media';
-      btn.type = 'button';
-      btn.textContent = '✕';
-      btn.onclick = () => { pendingMedia = null; mediaPreview.innerHTML = ''; mediaInput.value = ''; };
-      mediaPreview.querySelector('.preview-wrap').appendChild(btn);
+      _compressPostImage(ev.target.result, compressed => {
+        pendingMedia = { type: 'image', data: compressed };
+        mediaPreview.innerHTML = `<div class="preview-wrap"><img src="${compressed}" class="preview-media" alt="プレビュー"></div>`;
+        const btn = document.createElement('button');
+        btn.className = 'remove-media';
+        btn.type = 'button';
+        btn.textContent = '✕';
+        btn.onclick = () => { pendingMedia = null; mediaPreview.innerHTML = ''; mediaInput.value = ''; };
+        mediaPreview.querySelector('.preview-wrap').appendChild(btn);
+      });
     };
     reader.readAsDataURL(file);
   });
@@ -283,6 +287,23 @@ function _compressAvatar(dataUrl, callback) {
     canvas.height = Math.round(img.height * ratio);
     canvas.getContext('2d').drawImage(img, 0, 0, canvas.width, canvas.height);
     callback(canvas.toDataURL('image/jpeg', 0.75));
+  };
+  img.onerror = () => callback(dataUrl);
+  img.src = dataUrl;
+}
+
+function _compressPostImage(dataUrl, callback) {
+  const img = new Image();
+  img.onload = () => {
+    const MAX = 800;
+    const ratio = Math.min(MAX / img.width, MAX / img.height, 1);
+    const canvas = document.createElement('canvas');
+    canvas.width  = Math.round(img.width  * ratio);
+    canvas.height = Math.round(img.height * ratio);
+    canvas.getContext('2d').drawImage(img, 0, 0, canvas.width, canvas.height);
+    let result = canvas.toDataURL('image/jpeg', 0.72);
+    if (result.length > 900000) result = canvas.toDataURL('image/jpeg', 0.45);
+    callback(result);
   };
   img.onerror = () => callback(dataUrl);
   img.src = dataUrl;
