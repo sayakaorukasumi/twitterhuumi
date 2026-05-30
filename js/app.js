@@ -1,4 +1,4 @@
-(function(){try{var V='20260529h';if(localStorage.getItem('_appv')!==V){localStorage.setItem('_appv',V);window.location.reload(true);}}catch(e){}})();
+(function(){try{var V='20260529i';if(localStorage.getItem('_appv')!==V){localStorage.setItem('_appv',V);window.location.reload(true);}}catch(e){}})();
 
 document.addEventListener('DOMContentLoaded', () => {
   Notifications.init(document.getElementById('notifications'));
@@ -9,7 +9,7 @@ document.addEventListener('DOMContentLoaded', () => {
   catchUpWhileAway();
   // バージョン確認用：ホーム見出しに現在のコードバージョンを表示
   const _hdr = document.querySelector('#view-home .timeline-header h1');
-  if (_hdr) _hdr.textContent = 'ホーム (h)';
+  if (_hdr) _hdr.textContent = 'ホーム (i)';
 
   document.querySelectorAll('[data-view]').forEach(item => {
     item.addEventListener('click', e => {
@@ -87,19 +87,22 @@ document.addEventListener('DOMContentLoaded', () => {
     // 投稿の1秒後に最初の謎ユーザー通知を確実に届ける
     const _previewText = text.slice(0, 60);
     setTimeout(() => {
-      var _dbg = 'start';
+      var _typ = typeof Characters;
+      var _dbg = 'typ='+_typ;
       try {
+        if (_typ === 'undefined') throw new Error('Characters_undef');
         _dbg = 'getUser';
         const u = Characters.getRandomPseudoReplier();
         _dbg = 'add';
         NotifList.add({ type: 'like', actorName: u.name, isCharacter: null, actionText: 'あなたの投稿をいいねしました', postPreview: _previewText });
         _dbg = 'done';
       } catch(e) { _dbg = 'ERR@'+_dbg+':'+e.message; }
+      var _h = document.querySelector('#view-home .timeline-header h1');
+      if (_h) _h.textContent = _dbg + ' u=' + NotifList._unread;
       ['notif-badge','notif-badge-mobile'].forEach(function(id){
         var el=document.getElementById(id);
         if(el){el.textContent=String(NotifList._unread||'?');el.removeAttribute('style');}
       });
-      Notifications.show('🔔 '+_dbg+' u='+NotifList._unread+' c='+(NotifList.container?'ok':'null'), 'default');
     }, 1000);
   });
 
